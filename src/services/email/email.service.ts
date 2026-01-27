@@ -12,7 +12,8 @@ const apiInstance = new TransactionalEmailsApi();
 // Configure API key for Brevo
 apiInstance.setApiKey(TransactionalEmailsApiApiKeys.apiKey, ApiKey);
 
-const senderName = "NeoBank";
+const senderName = "Wealth Vintage";
+const senderEmail = config.sendBlue.email ?? "info@wealthvintage.com";
 
 const completeAction = (html: string, userMail: string, userName: string, subject?) => {
   const sendSmtpEmail = new SendSmtpEmail();
@@ -21,7 +22,7 @@ const completeAction = (html: string, userMail: string, userName: string, subjec
   sendSmtpEmail.htmlContent = html;
   sendSmtpEmail.sender = {
     name: senderName,
-    email: "ikezuby2012@gmail.com",
+    email: senderEmail,
   };
   sendSmtpEmail.to = [
     {
@@ -59,8 +60,8 @@ export const sendPasswordReset = (userMail: string, pin: string) => {
   sendSmtpEmail.subject = "Reset Your Password!";
   sendSmtpEmail.htmlContent = html;
   sendSmtpEmail.sender = {
-    name: "toolify",
-    email: "ikezuby2012@gmail.com",
+    name: senderName,
+    email: senderEmail,
   };
   sendSmtpEmail.to = [
     {
