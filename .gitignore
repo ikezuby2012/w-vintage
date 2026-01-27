@@ -1,0 +1,12 @@
+node_modules
+.env
+*.env
+
+keys.json
+test.json
+
+/build
+build
+
+node_modules.zip
+node_modules/
