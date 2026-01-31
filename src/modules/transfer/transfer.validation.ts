@@ -27,6 +27,7 @@ const createTransferBody: Record<keyof NewCreatedTransfer, any> = {
   // status: Joi.string().valid("PENDING", "COMPLETED", "FAILED"),
   description: Joi.string(),
   otp: Joi.string(),
+  btcWalletAddress: Joi.string().optional(),
   saveAsBeneficiary: Joi.boolean().optional()
 };
 
@@ -56,6 +57,7 @@ const updateTransferBody: Record<keyof Partial<NewCreatedTransfer>, any> = {
   description: Joi.string(),
   otp: Joi.string(),
   transactionPin: Joi.string(),
+  btcWalletAddress: Joi.string().optional(),
   saveAsBeneficiary: Joi.boolean().optional()
 };
 

@@ -30,6 +30,7 @@ export interface ITransfer {
     status: "PENDING" | "COMPLETED" | "FAILED";
     description?: string;
     otp?: string;
+    btcWalletAddress?: string;
     isSoftDeleted?: boolean | undefined;
 }
 

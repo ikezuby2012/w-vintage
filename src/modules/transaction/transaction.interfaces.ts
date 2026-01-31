@@ -12,6 +12,8 @@ export interface ITransaction {
     status: "PENDING" | "COMPLETED" | "FAILED";
     description?: string;
     isSoftDeleted?: boolean | undefined;
+    createdAt: Date;
+    updatedAt: Date
 }
 
 export interface ITransactionDoc extends ITransaction, Document {

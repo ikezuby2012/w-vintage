@@ -65,7 +65,7 @@ const paginate = (schema: Schema) => {
         });
         project = projectionCriteria.join(" ");
       } else {
-        project = "-createdAt -updatedAt";
+        project = "+createdAt +updatedAt";
       }
 
       const limit =

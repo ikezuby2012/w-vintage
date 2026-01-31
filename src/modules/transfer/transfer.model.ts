@@ -29,6 +29,7 @@ const transferSchema = new mongoose.Schema<ITransferDoc, ITransferModel>(
     zelleEmail: { type: String },
     aliPayId: { type: String },
     weChatId: { type: String },
+    btcWalletAddress: { type: String },
     status: {
       type: String,
       enum: ["PENDING", "COMPLETED", "FAILED", "REJECTED"],
