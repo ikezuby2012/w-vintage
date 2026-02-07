@@ -50,6 +50,17 @@ transactionSchema.static(
   }
 );
 
+transactionSchema.pre<ITransactionDoc>(/^find/, function (next) {
+    this.populate({
+    path: "accountId",
+    populate: {
+      path: "userId",
+      select: "name email phoneNumber country",
+    },
+  });
+    next();
+});
+
 const Transaction = mongoose.model<ITransactionDoc, ITransactionModel>("Transaction", transactionSchema);
 
 export default Transaction;

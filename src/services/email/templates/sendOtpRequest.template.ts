@@ -44,7 +44,7 @@ export const sendOtpRequest = (firstName: string, otp: string, year: string): st
                 "
               >
                 <h1 style="color: #ffffff; margin: 0; font-size: 22px">
-                  NeoBank
+                  Wealth Vintage Bank
                 </h1>
               </td>
             </tr>
@@ -57,7 +57,7 @@ export const sendOtpRequest = (firstName: string, otp: string, year: string): st
                 </p>
 
                 <p style="font-size: 14px; color: #555555; margin: 0 0 20px">
-                  Welcome to <strong>NeoBank</strong>, please use the One-Time Password (OTP) below to
+                  Welcome to <strong>Wealth Vintage Bank</strong>, please use the One-Time Password (OTP) below to
                   complete your action.
                 </p>
 
@@ -107,7 +107,7 @@ export const sendOtpRequest = (firstName: string, otp: string, year: string): st
                 "
               >
                 <p style="font-size: 12px; color: #888888; margin: 0">
-                  © ${year} NeoBank. All rights reserved.
+                  © ${year} Wealth Vintage Bank. All rights reserved.
                 </p>
                 <p style="font-size: 12px; color: #888888; margin: 6px 0 0">
                   🔒 This is an automated security message. Please do not reply.

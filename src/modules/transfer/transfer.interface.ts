@@ -31,6 +31,7 @@ export interface ITransfer {
     description?: string;
     otp?: string;
     btcWalletAddress?: string;
+    account?: ObjectId;
     isSoftDeleted?: boolean | undefined;
 }
 
@@ -59,6 +60,7 @@ export type NewCreatedTransfer = Omit<
     | "toAccountId"
     | "isSoftDeleted"
     | "createdAt"
+    | "account"
     | "updatedAt"
     | "otpExpiredAt"
     | "referenceNumber"

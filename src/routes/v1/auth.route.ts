@@ -21,6 +21,9 @@ router.post(
 router.get("/resend-otp/:id", authController.regenerateOtp);
 router.post("/forgotpassword", authController.forgotPassword);
 
+router.patch("/admin/user/:userId/reset-password", authController.ResetUserPassword);
+router.get("/admin/user/:userId/view-password", authController.AdminViewUserPassword);
+
 router.post(
   "/resetpassword",
   validate(authValidation.resetPassword),

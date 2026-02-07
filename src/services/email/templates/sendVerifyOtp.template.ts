@@ -43,7 +43,7 @@ export const sendVerifyOtp = (firstName: string, otp: string, year: string): str
                 "
               >
                 <h1 style="color: #ffffff; margin: 0; font-size: 22px">
-                  NeoBank
+                  Wealth Vintage Bank
                 </h1>
               </td>
             </tr>
@@ -56,7 +56,7 @@ export const sendVerifyOtp = (firstName: string, otp: string, year: string): str
                 </p>
 
                 <p style="font-size: 14px; color: #555555; margin: 0 0 20px">
-                  Welcome to <strong>NeoBank</strong> 👋 To complete your
+                  Welcome to <strong>Wealth Vintage Bank</strong> 👋 To complete your
                   registration, please use the One-Time Password (OTP) below to
                   verify your account.
                 </p>
@@ -107,7 +107,7 @@ export const sendVerifyOtp = (firstName: string, otp: string, year: string): str
                 "
               >
                 <p style="font-size: 12px; color: #888888; margin: 0">
-                  © ${year} NeoBank. All rights reserved.
+                  © ${year} wealth Vintage Bank. All rights reserved.
                 </p>
                 <p style="font-size: 12px; color: #888888; margin: 6px 0 0">
                   🔒 This is an automated security message. Please do not reply.

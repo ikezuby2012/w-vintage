@@ -13,6 +13,7 @@ export interface IUser {
   isEmailVerified?: boolean | undefined;
   isVerified?: boolean | undefined;
   active?: boolean | undefined;
+  mustChangePassword?: boolean;
   country?: string | undefined;
   passwordResetToken?: String | undefined;
   passwordResetExpires?: Date | undefined;
@@ -62,6 +63,7 @@ export type NewRegisteredUser = Omit<
   | "adminOnlyView"
   | "otpExpires"
   | "otp"
+  | "mustChangePassword"
 > & Pick<IAccount, 'accountType' | 'transactionPin'>;
 
 export type NewCreatedUser = Omit<
@@ -73,6 +75,7 @@ export type NewCreatedUser = Omit<
   | "passwordResetExpires"
   | "passwordChangedAt"
   | "googleId"
+  | "mustChangePassword"
 >;
 
 export interface IUserWithTokens {

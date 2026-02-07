@@ -7,6 +7,7 @@ import pick from "../utils/pick";
 import { IOptions } from "../paginate/paginate";
 import * as cardService from "./card.service";
 import Card from "./card.model";
+import { Transaction } from "../transaction";
 
 
 export const createCard = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
@@ -174,3 +175,65 @@ export const getUserCards = catchAsync(async (req: Request | any, res: Response,
     data: cards,
   });
 });
+
+export const getCardStats = catchAsync(
+  async (req: Request, res: Response) => {
+    const startOfMonth = new Date();
+    startOfMonth.setUTCDate(1);
+    startOfMonth.setUTCHours(0, 0, 0, 0);
+
+    const endOfMonth = new Date();
+    endOfMonth.setUTCMonth(endOfMonth.getUTCMonth() + 1);
+    endOfMonth.setUTCDate(1);
+    endOfMonth.setUTCHours(0, 0, 0, 0);
+
+    const [cardStats, monthlySpend] = await Promise.all([
+      Card.aggregate([
+        {
+          $match: { isSoftDeleted: { $ne: true } }
+        },
+        {
+          $group: {
+            _id: null,
+            totalCards: { $sum: 1 },
+            activeCards: {
+              $sum: { $cond: [{ $eq: ["$status", "ACTIVE"] }, 1, 0] }
+            },
+            frozenCards: {
+              $sum: { $cond: [{ $eq: ["$status", "FROZEN"] }, 1, 0] }
+            }
+          }
+        }
+      ]),
+      Transaction.aggregate([
+        {
+          $match: {
+            // transactionType: "PAYMENT",
+            status: "COMPLETED",
+            createdAt: {
+              $gte: startOfMonth,
+              $lt: endOfMonth
+            },
+            isSoftDeleted: { $ne: true }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            monthlySpend: { $sum: "$amount" }
+          }
+        }
+      ])
+    ]);
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      data: {
+        totalCards: cardStats[0]?.totalCards ?? 0,
+        activeCards: cardStats[0]?.activeCards ?? 0,
+        frozenCards: cardStats[0]?.frozenCards ?? 0,
+        monthlySpend: monthlySpend[0]?.monthlySpend ?? 0
+      }
+    });
+  }
+);

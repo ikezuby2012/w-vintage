@@ -4,6 +4,7 @@ import config from "../../config";
 import { passwordReset } from "./templates/passwordReset.template";
 import { sendVerifyOtp } from "./templates/sendVerifyOtp.template";
 import { sendOtpRequest } from "./templates/sendOtpRequest.template";
+import { resetUserPasswordEmail } from "./templates/resetUserpassword.template";
 
 const { api_key: ApiKey } = config.sendBlue;
 
@@ -90,4 +91,10 @@ export const sendOtpRequestMail = (
   const html = sendOtpRequest(userName, pin, new Date().getFullYear().toString());
 
   completeAction(html, userMail, userName, "Complete your action");
+};
+
+export const sendPasswordResetAdmin = (userName: string, userMail: string, defaultPassword: string) => {
+  const html = resetUserPasswordEmail(userName, new Date().getFullYear().toString(), defaultPassword);
+
+  completeAction(html, userMail, userName, "Password reset!");
 };

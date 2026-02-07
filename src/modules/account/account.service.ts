@@ -9,6 +9,8 @@ import {
   NewCreatedAccount,
 } from "./account.interface";
 
+const ALLOWED_STATUSES = ["PENDING", "ACTIVE", "FROZEN", "SUSPENDED"];
+
 /**
  * Create an account
  * @param {NewCreatedAccount} accountBody
@@ -103,3 +105,16 @@ export const deleteAccountById = async (
 export const getAccountByUserId = async (
   userId: mongoose.Types.ObjectId
 ): Promise<any | null> => Account.findOne({ userId }).select("+transactionPin");
+export const GetAccountByStatus = async (status) => Account.find({ status });
+
+export const UpdateAccountStatus = async (accountId: string, status: string) => {
+  if (!ALLOWED_STATUSES.includes(status)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid status value");
+  }
+
+  return Account.findByIdAndUpdate(
+    accountId,
+    { status },
+    { new: true }
+  );
+};

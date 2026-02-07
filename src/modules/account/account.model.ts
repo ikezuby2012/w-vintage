@@ -55,6 +55,13 @@ accountSchema.static(
   }
 );
 
+accountSchema.pre<IAccountDoc>(/^find/, function (next) {
+  this.populate({
+    path: "userId"
+  });
+  next();
+});
+
 const Account = mongoose.model<IAccountDoc, IAccountModel>("Account", accountSchema);
 
 export default Account;

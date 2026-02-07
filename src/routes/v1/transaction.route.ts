@@ -38,5 +38,7 @@ router
   );
 
 router.route("/deposit").post(auth.protect, transactionController.depositTransaction);
+router.patch("/:transactionId/status", auth.protect, transactionController.updateTransactionStatus);
+router.get("/admin/stats", transactionController.getTransactionStats);
 
 export default router;

@@ -8,6 +8,7 @@ import {
   UpdateTransactionInfo,
   NewCreatedTransaction,
 } from "./transaction.interfaces";
+import { Account } from "../account";
 
 /**
  * Create a transaction
@@ -110,3 +111,118 @@ export const generateTransactionNumber = async () => {
 
   return `TRF${year}${month}${timestamp}`;
 }
+
+export const GetTransactionsCount = () => Transaction.countDocuments();
+
+export const getTransactionStats = async () => {
+  const result = await Transaction.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalVolume: { $sum: "$amount" },
+        totalTransactions: { $sum: 1 },
+        successfulTransactions: {
+          $sum: {
+            $cond: [{ $eq: ["$status", "COMPLETED"] }, 1, 0],
+          },
+        },
+        failedTransactions: {
+          $sum: {
+            $cond: [{ $eq: ["$status", "FAILED"] }, 1, 0],
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        totalVolume: 1,
+        totalTransactions: 1,
+        successfulTransactions: 1,
+        failedTransactions: 1,
+      },
+    },
+  ]);
+
+  return (
+    result[0] || {
+      totalVolume: 0,
+      totalTransactions: 0,
+      successfulTransactions: 0,
+      failedTransactions: 0,
+    }
+  );
+};
+
+export const updateTransactionStatusService = async (
+  transactionId: string,
+  status: "COMPLETED" | "FAILED"
+) => {
+  // 1. Load transaction
+  const transaction = await Transaction.findOne({
+    _id: transactionId,
+    isSoftDeleted: { $ne: true },
+  });
+
+  if (!transaction) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Transaction not found");
+  }
+
+  if (transaction.status === "COMPLETED") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Transaction already completed");
+  }
+
+  // 2. If FAILED → just update status
+  if (status === "FAILED") {
+    transaction.status = "FAILED";
+    await transaction.save();
+    return transaction;
+  }
+
+  // 3. COMPLETED logic
+  const account = await Account.findById(transaction.accountId);
+
+  if (!account) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Account not found");
+  }
+
+  const balanceBefore = account.balance;
+  let balanceChange = 0;
+
+  if (transaction.transactionType === "DEPOSIT") {
+    balanceChange = transaction.amount;
+  } else {
+    if (balanceBefore < transaction.amount) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance");
+    }
+    balanceChange = -transaction.amount;
+  }
+
+  // 4. Atomically update account balance
+  const updatedAccount = await Account.findOneAndUpdate(
+    {
+      _id: account._id,
+      balance: balanceChange < 0 ? { $gte: transaction.amount } : { $gte: 0 },
+    },
+    {
+      $inc: { balance: balanceChange },
+    },
+    { new: true }
+  );
+
+  if (!updatedAccount) {
+    throw new ApiError(
+      httpStatus.CONFLICT,
+      "Balance update failed"
+    );
+  }
+
+  // 5. Update transaction ledger
+  transaction.status = "COMPLETED";
+  transaction.balanceBefore = balanceBefore;
+  transaction.balanceAfter = updatedAccount.balance;
+
+  await transaction.save();
+
+  return transaction;
+};

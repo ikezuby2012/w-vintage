@@ -36,4 +36,7 @@ router
     accountController.deleteAccount
   );
 
+router.get("/:accountId/verify-account", auth.protect, accountController.verifyAccount);
+router.patch("/:accountId/update-status", auth.protect, accountController.updateAccountStatus);
+
 export default router;

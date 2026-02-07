@@ -15,7 +15,6 @@ router
   )
   .get(
     auth.protect,
-    validate(transferValidation.getTransfer),
     transferController.getTransfers
   );
 
@@ -28,7 +27,7 @@ router
   )
   .patch(
     auth.protect,
-    validate(transferValidation.updateTransfer),
+   // validate(transferValidation.updateTransfer),
     transferController.updateTransfer
   )
   .delete(
@@ -37,6 +36,7 @@ router
     transferController.deleteTransfer
   );
 
+router.get("/admin/stats", transferController.getTransferStats);
 // router
 //   .route("/validate-otp")
 //   .post(

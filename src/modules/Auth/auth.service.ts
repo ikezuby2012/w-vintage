@@ -9,6 +9,7 @@ import { IUserDoc, IUserWithToken } from "../user/user.interfaces";
 import { User } from "../user";
 import { verifyOtp } from "../../services/otp/otp.service";
 import config from "../../config";
+import bcrypt from "bcryptjs";
 
 const algorithm = 'aes-256-gcm';
 const keyString = process.env.ENCRYPTION_KEY || 'your-default-key-here';
@@ -161,14 +162,14 @@ export const regenerateNewOtp = async (
 
 export function encryptPassword(text: string): string {
   const iv = new Uint8Array(crypto.randomBytes(12)); // GCM recommends 12-byte IV
-  
+
   const cipher = crypto.createCipheriv(algorithm, key, iv, {
     authTagLength: 16 // Standard for GCM
   });
 
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  
+
   const authTag = cipher.getAuthTag();
 
   return [
@@ -178,24 +179,67 @@ export function encryptPassword(text: string): string {
   ].join(':');
 }
 
-export function decryptPassword(payload: string): string {
-  const [ivHex, tagHex, encryptedHex] = payload.split(':');
+export function decryptPassword(encryptedText: string): string {
+  try {
+    // Split the encrypted text into its components
+    const parts = encryptedText.split(':');
+    
+    if (parts.length !== 3) {
+      throw new Error('Invalid encrypted text format');
+    }
 
-  const iv = new Uint8Array(Buffer.from(ivHex, 'hex'));
-  const encrypted = new Uint8Array(Buffer.from(encryptedHex, 'hex'));
+    const [ivString, authTagHex, encrypted] = parts;
 
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(
-    new Uint8Array(Buffer.from(tagHex, 'hex'))
-  );
+    // Convert the IV back to Uint8Array
+    const iv = new Uint8Array(ivString.split(',').map(Number));
+    
+    // Convert the auth tag from hex to Buffer
+    const authTag = Buffer.from(authTagHex, 'hex');
 
+    // Create decipher
+    const decipher = crypto.createDecipheriv(algorithm, key, iv, {
+      authTagLength: 16
+    });
 
-  const part1 = decipher.update(encrypted);
-  const part2 = decipher.final();
+    // Set the auth tag
+    decipher.setAuthTag(authTag);
 
-  const decrypted = new Uint8Array(part1.length + part2.length);
-  decrypted.set(part1, 0);
-  decrypted.set(part2, part1.length);
+    // Decrypt
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
 
-  return Buffer.from(decrypted).toString('utf8');
+    return decrypted;
+    
+  } catch (error: any) {
+    throw new Error(`Decryption failed: ${error.message}`);
+  }
 }
+
+export const GetUserForAdminPasswordView = async (userId: string) => {
+  return User.findById(userId).select("adminOnlyView");
+};
+
+export const generateDefaultPassword = (): string => {
+  const prefix = "WealthVin";
+  const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$!";
+  let randomPart = "";
+
+  for (let i = 0; i < 6; i++) {
+    randomPart += chars.charAt(
+      Math.floor(Math.random() * chars.length)
+    );
+  }
+
+  return `${prefix}_${randomPart}`;
+};
+
+export const resetPassword = async (userId: string, newPassword: string) => {
+  const hashedPassword = newPassword;
+
+  return User.findByIdAndUpdate(
+    userId,
+    { password: hashedPassword },
+    { new: true }
+  );
+};

@@ -35,6 +35,7 @@ const transferSchema = new mongoose.Schema<ITransferDoc, ITransferModel>(
       enum: ["PENDING", "COMPLETED", "FAILED", "REJECTED"],
       default: "PENDING"
     },
+    account: { type: mongoose.Schema.Types.ObjectId, ref: "Account", required: true },
     description: { type: String },
     otp: { type: String },
     isSoftDeleted: { type: Boolean, default: false, select: false },
@@ -64,6 +65,17 @@ transferSchema.static(
     return !!transfer;
   }
 );
+
+transferSchema.pre<ITransferDoc>(/^find/, function (next) {
+  this.populate({
+    path: "account",
+    populate: {
+      path: "userId",
+      select: "name email phoneNumber country",
+    },
+  });
+  next();
+});
 
 const Transfer = mongoose.model<ITransferDoc, ITransferModel>("Transfer", transferSchema);
 

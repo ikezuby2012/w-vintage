@@ -50,6 +50,13 @@ cardSchema.static(
   }
 );
 
+cardSchema.pre<ICardDoc>(/^find/, function (next) {
+  this.populate({
+    path: "userId"
+  });
+  next();
+});
+
 const Card = mongoose.model<ICardDoc, ICardModel>("Card", cardSchema);
 
 export default Card;

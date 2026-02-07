@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
 import { NextFunction, Request, Response } from "express";
-import mongoose, {Types} from "mongoose";
+import mongoose, { Types } from "mongoose";
 import catchAsync from "../utils/catchAsync";
 import ApiError from "../errors/ApiError";
 import pick from "../utils/pick";
@@ -14,8 +14,6 @@ import { v4 as uuidv4 } from 'uuid';
 export const createTransaction = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
   const { transactionType, amount } = req.body;
-
-  const refNumber = uuidv4();
 
   const userAccount = await accountService.getAccountByUserId(new mongoose.Types.ObjectId(userId));
   if (!userAccount) {
@@ -151,3 +149,76 @@ export const getUserTransaction = catchAsync(async (req: Request | any, res: Res
     data: txn,
   });
 });
+
+export const getAdminTransaction = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
+  const stats = await transactionService.getTransactionStats();
+
+  res.status(200).json({
+    status: "success",
+    data: stats,
+  });
+});
+
+export const updateTransactionStatus = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { transactionId } = req.params;
+    const { status } = req.body;
+
+    if (!["COMPLETED", "FAILED"].includes(status)) {
+      return next(
+        new ApiError(httpStatus.BAD_REQUEST, "Invalid status")
+      );
+    }
+
+    const transaction = await transactionService.updateTransactionStatusService(
+      transactionId,
+      status
+    );
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      data: transaction,
+    });
+  }
+);
+
+export const getTransactionStats = catchAsync(
+  async (req: Request, res: Response) => {
+    const stats = await Transaction.aggregate([
+      {
+        $match: { isSoftDeleted: { $ne: true } }
+      },
+      {
+        $group: {
+          _id: null,
+          totalVolume: { $sum: "$amount" },
+          totalTransactions: { $sum: 1 },
+          successfulTransactions: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "COMPLETED"] }, 1, 0]
+            }
+          },
+          failedTransactions: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "FAILED"] }, 1, 0]
+            }
+          },
+          avgTransactionAmount: { $avg: "$amount" }
+        }
+      }
+    ]);
+
+    const result = stats[0] ?? {
+      totalVolume: 0,
+      totalTransactions: 0,
+      successfulTransactions: 0,
+      failedTransactions: 0,
+      avgTransactionAmount: 0
+    };
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      data: result
+    });
+  }
+);

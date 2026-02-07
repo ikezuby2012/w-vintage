@@ -77,6 +77,14 @@ app.use("/api/v1", routes);
 // Serve the React app from the build directory
 app.use(express.static(path.join(__dirname, "../client")));
 
+app.use((req, res, next) => {
+  // Check if request starts with /api but wasn't handled by API routes
+  if (req.path.startsWith('/api')) {
+    return next(new ApiError(httpStatus.NOT_FOUND, "API endpoint not found"));
+  }
+  next();
+});
+
 // SPA fallback (must point to dist/index.html)
 app.get("*", (req, res) => {
   res.sendFile(

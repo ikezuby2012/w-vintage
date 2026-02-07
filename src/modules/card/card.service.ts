@@ -145,3 +145,5 @@ export function generateCardNumber(brand: CardBrand): string {
 export const generateCVV = (): string => {
   return Math.floor(100 + Math.random() * 900).toString();
 };
+
+export const GetCardsCount = () => Card.countDocuments();

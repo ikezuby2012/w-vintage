@@ -8,6 +8,7 @@ import transferRoute from "./transfer.route";
 import cardRoute from "./card.route";
 import beneficiaryRoute from "./beneficiary.route";
 import otpRequestRoute from "./otpRequest.route";
+import dashboardRoute from "./dashboard.route";
 
 // import config from "../../config";
 
@@ -51,6 +52,10 @@ const defaultIRoute: IRoute[] = [
   {
     path: "/beneficiaries",
     route: beneficiaryRoute,
+  },
+  {
+    path: "/dashboard",
+    route: dashboardRoute,
   },
   {
     path: "/otp-request",

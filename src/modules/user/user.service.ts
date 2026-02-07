@@ -107,6 +107,7 @@ export const deleteUserById = async (
   return user;
 };
 
+export const GetUsersCount = () => User.countDocuments();
 
 // Function to generate unique 12-digit account number using timestamp
 export const generateAccountNumber = (): string => {

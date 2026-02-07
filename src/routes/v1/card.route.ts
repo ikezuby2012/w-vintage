@@ -40,4 +40,7 @@ router
     cardController.deleteCard
   );
 
+router.get("/admin/stats", cardController.getCardStats);
+
+
 export default router;

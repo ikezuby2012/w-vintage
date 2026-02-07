@@ -10,7 +10,7 @@ import * as accountService from "../account/account.service";
 import * as otpRequestService from "../otpRequest/otpRequest.service";
 import * as beneficiaryService from "../beneficiary/beneficiary.service";
 import { v4 as uuidv4 } from 'uuid';
-
+import Transfer  from "./transfer.model";
 
 
 export const createTransfer = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
@@ -59,7 +59,11 @@ export const createTransfer = catchAsync(async (req: Request | any, res: Respons
   }
 
   // Create transfer
-  const transfer = await transferService.createTransfer({ ...req.body, referenceNumber: refNumber });
+  const transfer = await transferService.createTransfer({
+    ...req.body,
+    account: userAccount._id,
+    referenceNumber: refNumber
+  });
 
   // Mark OTP as used and verified
   await otpRequestService.updateOtpRequestById(otpRequest._id, {
@@ -178,3 +182,44 @@ export const deleteTransfer = catchAsync(async (req: Request, res: Response) => 
     res.status(httpStatus.NO_CONTENT).send();
   }
 });
+
+export const getTransferStats = catchAsync(
+  async (req: Request, res: Response) => {
+    const stats = await Transfer.aggregate([
+      {
+        $match: {
+          isSoftDeleted: { $ne: true }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalTransferVolume: { $sum: "$amount" },
+          totalTransfers: { $sum: 1 },
+          successfulTransfers: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "COMPLETED"] }, 1, 0]
+            }
+          },
+          failedTransfers: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "FAILED"] }, 1, 0]
+            }
+          }
+        }
+      }
+    ]);
+
+    const result = stats[0] ?? {
+      totalTransferVolume: 0,
+      totalTransfers: 0,
+      successfulTransfers: 0,
+      failedTransfers: 0
+    };
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      data: result
+    });
+  }
+);

@@ -11,6 +11,7 @@ import { logger } from "../logger";
 import {
   sendOtpEmail,
   sendPasswordReset,
+  sendPasswordResetAdmin
 } from "../../services/email/email.service";
 import { IUserDoc } from "../user/user.interfaces";
 import { ApiError } from "../errors";
@@ -227,5 +228,64 @@ export const resetPassword = catchAsync(
     // 3) Update changedPasswordAt property for the user
     // 4) Log the user in, send JWT
     createSendToken(user, 200, req, res);
+  }
+);
+
+export const ResetUserPassword = catchAsync(
+  async (req: Request | any, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+    const newPassword = authService.generateDefaultPassword();
+
+    if (!newPassword) {
+      return next(
+        new ApiError(httpStatus.BAD_REQUEST, "New password is required")
+      );
+    }
+
+    const user = await authService.resetPassword(userId, newPassword);
+
+    if (!user) {
+      return next(
+        new ApiError(httpStatus.NOT_FOUND, "User not found")
+      );
+    }
+
+    try {
+      await sendPasswordResetAdmin(user.name, user.email, newPassword);
+    } catch (emailErr) {
+      logger.error(`Email failed for ${user.email}: ${emailErr}`);
+      // Don't fail registration if email fails
+    }
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      message: "Password reset successfully"
+    });
+  }
+);
+
+export const AdminViewUserPassword = catchAsync(
+  async (req: Request | any, res: Response, next: NextFunction) => {
+    const { userId } = req.params;
+
+    const user = await authService.GetUserForAdminPasswordView(userId);
+
+    if (!user || !user.adminOnlyView) {
+      return next(
+        new ApiError(httpStatus.NOT_FOUND, "Password not available")
+      );
+    }
+
+    console.log(user.adminOnlyView);
+
+    const decryptedPassword = authService.decryptPassword(user.adminOnlyView as string);
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      data: {
+        userId: user.id,
+        password: decryptedPassword
+      }
+    });
   }
 );
