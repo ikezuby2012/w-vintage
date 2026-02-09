@@ -41,6 +41,7 @@ router
   );
 
 router.get("/admin/stats", cardController.getCardStats);
-
+router.patch("/admin/:cardId/activate", cardController.activateCard);
+router.patch("/admin/:cardId/status", cardController.updateCardStatus);
 
 export default router;

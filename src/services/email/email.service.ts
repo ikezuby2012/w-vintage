@@ -5,6 +5,7 @@ import { passwordReset } from "./templates/passwordReset.template";
 import { sendVerifyOtp } from "./templates/sendVerifyOtp.template";
 import { sendOtpRequest } from "./templates/sendOtpRequest.template";
 import { resetUserPasswordEmail } from "./templates/resetUserpassword.template";
+import { resetPinEmailTemplate } from "./templates/resetPinEmail.template";
 
 const { api_key: ApiKey } = config.sendBlue;
 
@@ -97,4 +98,9 @@ export const sendPasswordResetAdmin = (userName: string, userMail: string, defau
   const html = resetUserPasswordEmail(userName, new Date().getFullYear().toString(), defaultPassword);
 
   completeAction(html, userMail, userName, "Password reset!");
+};
+
+export const sendResetPinEmail = (userName: string, userMail: string, pin: string) => {
+  const html = resetPinEmailTemplate({ name: userName, otp: pin });
+  completeAction(html, userMail, userName, "Reset Your Card PIN");
 };

@@ -16,7 +16,8 @@ const accountSchema = new mongoose.Schema<IAccountDoc, IAccountModel>(
       type: String,
       select: false, // NEVER return it by default
     },
-
+    resetPinToken: { type: String },
+    resetPinExpires: { type: Date },
     isVerified: { type: Boolean, default: false },
     status:
     {

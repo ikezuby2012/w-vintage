@@ -20,6 +20,10 @@ export const createTransaction = catchAsync(async (req: Request | any, res: Resp
     return next(new ApiError(httpStatus.NOT_FOUND, "User account not found"));
   }
 
+  if (userAccount.status === "SUSPENDED" || userAccount.status === "FROZEN") {
+    return next(new ApiError(httpStatus.FORBIDDEN, "Dear Customer, we have discovered suspicious activities on your account. An unauthorized IP address attempted to carry out a transaction on your account and credit card. Consequently, your account has been flagged by our risk assessment department. kindly visit our nearest branch with your identification card and utility bill to confirm your identity before it can be reactivated. For more information, kindly contact our online customer care representative at info@wealthvintage.com"));
+  }
+
   if (amount > userAccount.balance) {
     return next(new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance to cover transfer fee"));
   }

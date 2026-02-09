@@ -11,6 +11,8 @@ export interface IAccount {
     transactionPin?: string;
     isActive: boolean;
     isVerified: boolean;
+    resetPinToken?: string;
+    resetPinExpires?: Date;
     status: "ACTIVE" | "SUSPENDED" | "CLOSED" | "PENDING" | "FROZEN";
     isSoftDeleted?: boolean | undefined;
 }
@@ -41,4 +43,6 @@ export type NewCreatedAccount = Omit<
     | "isVerified"
     | "createdAt"
     | "updatedAt"
+    | "resetPinToken"
+    | "resetPinExpires"
 >;

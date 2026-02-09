@@ -38,5 +38,6 @@ router
 
 router.get("/:accountId/verify-account", auth.protect, accountController.verifyAccount);
 router.patch("/:accountId/update-status", auth.protect, accountController.updateAccountStatus);
-
+router.patch("/admin/:accountId/request-reset-pin", auth.protect, accountController.requestPinReset);
+  
 export default router;

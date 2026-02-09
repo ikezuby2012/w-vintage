@@ -9,6 +9,7 @@ import * as cardService from "./card.service";
 import Card from "./card.model";
 import { Transaction } from "../transaction";
 
+type CardStatus = "ACTIVE" | "SUSPENDED" | "CLOSED" | "PENDING" | "FROZEN";
 
 export const createCard = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
@@ -237,3 +238,89 @@ export const getCardStats = catchAsync(
     });
   }
 );
+
+export const activateCard = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { cardId } = req.params;
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return next(
+        new ApiError(httpStatus.NOT_FOUND, "Card not found")
+      );
+    }
+
+    if (card.isVerified) {
+      return next(
+        new ApiError(
+          httpStatus.BAD_REQUEST,
+          "Card is already verified and active"
+        )
+      );
+    }
+
+    card.isVerified = true;
+    card.status = "ACTIVE";
+
+    await card.save();
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      message: "Card successfully activated",
+      data: card
+    });
+  }
+);
+
+export const updateCardStatus = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { cardId } = req.params;
+    const { status } = req.body as { status: string };
+
+    const allowedStatuses = ["ACTIVE", "SUSPENDED", "CLOSED", "PENDING", "FROZEN"];
+
+    if (!allowedStatuses.includes(status)) {
+      return next(
+        new ApiError(httpStatus.BAD_REQUEST, "Invalid card status")
+      );
+    }
+
+    const card = await Card.findById(cardId);
+
+    if (!card) {
+      return next(
+        new ApiError(httpStatus.NOT_FOUND, "Card not found")
+      );
+    }
+
+    // ❌ Cannot activate an unverified card
+    if (status === "ACTIVE" && !card.isVerified) {
+      return next(
+        new ApiError(
+          httpStatus.BAD_REQUEST,
+          "Card must be verified before activation"
+        )
+      );
+    }
+
+    // No-op guard
+    if (card.status === status) {
+      return res.status(httpStatus.OK).json({
+        status: "success",
+        message: "Card status unchanged",
+        data: card
+      });
+    }
+
+    card.status = status as CardStatus;
+    await card.save();
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      message: `Card status updated to ${status}`,
+      data: card
+    });
+  }
+);
+

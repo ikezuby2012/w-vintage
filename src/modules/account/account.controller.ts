@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import httpStatus from "http-status";
 import { Types } from "mongoose";
 import { NextFunction, Request, Response } from "express";
@@ -7,9 +8,12 @@ import ApiError from "../errors/ApiError";
 import pick from "../utils/pick";
 import { IOptions } from "../paginate/paginate";
 import * as accountService from "./account.service";
+import * as userService from "../user/user.service";
 import * as transactionService from "../transaction/transaction.service";
 import { v4 as uuidv4 } from 'uuid';
 import { NewCreatedTransaction } from "modules/transaction/transaction.interfaces";
+import { generateOtp } from "../../services/otp/otp.service";
+import { sendResetPinEmail } from "../../services/email/email.service";
 
 export const createAccount = catchAsync(async (req: Request, res: Response) => {
   const account = await accountService.createAccount(req.body);
@@ -189,4 +193,42 @@ export const updateAccountStatus = catchAsync(async (req: Request | any, res: Re
     message: `Account status updated to ${status}`,
     data: updatedAccount
   });
-})
+});
+
+export const requestPinReset = catchAsync(async (req, res, next) => {
+  const { accountId } = req.params;
+
+  const account: any = await accountService.getAccountById(accountId);
+
+  if (!account) {
+    return next(
+      new ApiError(httpStatus.NOT_FOUND, "Account not found")
+    );
+  }
+
+  const user = await userService.getUserById(account.userId?._id);
+
+  if (!user) {
+    return next(
+      new ApiError(httpStatus.NOT_FOUND, "User not found")
+    );
+  }
+
+  const otp = generateOtp();
+
+  account.resetPinToken = crypto
+    .createHash("sha256")
+    .update(otp)
+    .digest("hex");
+
+  account.resetPinExpires = new Date(Date.now() + 20 * 60 * 1000); // 10 mins
+
+  await account.save({ validateBeforeSave: false });
+
+  await sendResetPinEmail(user.name, user.email, otp);
+
+  res.status(httpStatus.OK).json({
+    status: "success",
+    message: "PIN reset OTP sent to email"
+  });
+});

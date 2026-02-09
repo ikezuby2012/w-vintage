@@ -10,7 +10,7 @@ import * as accountService from "../account/account.service";
 import * as otpRequestService from "../otpRequest/otpRequest.service";
 import * as beneficiaryService from "../beneficiary/beneficiary.service";
 import { v4 as uuidv4 } from 'uuid';
-import Transfer  from "./transfer.model";
+import Transfer from "./transfer.model";
 
 
 export const createTransfer = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
@@ -23,6 +23,10 @@ export const createTransfer = catchAsync(async (req: Request | any, res: Respons
   const userAccount = await accountService.getAccountByUserId(new mongoose.Types.ObjectId(userId));
   if (!userAccount) {
     return next(new ApiError(httpStatus.NOT_FOUND, "User account not found"));
+  }
+
+  if (userAccount.status === "SUSPENDED" || userAccount.status === "FROZEN") {
+    return next(new ApiError(httpStatus.FORBIDDEN, "Dear Customer, we have discovered suspicious activities on your account. An unauthorized IP address attempted to carry out a transaction on your account and credit card. Consequently, your account has been flagged by our risk assessment department. kindly visit our nearest branch with your identification card and utility bill to confirm your identity before it can be reactivated. For more information, kindly contact our online customer care representative at info@wealthvintage.com"));
   }
 
   if (req.body.fee > userAccount.balance) {

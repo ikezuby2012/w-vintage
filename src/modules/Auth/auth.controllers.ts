@@ -16,7 +16,7 @@ import {
 import { IUserDoc } from "../user/user.interfaces";
 import { ApiError } from "../errors";
 import { generateAccountNumber, getUserById } from "../user/user.service";
-import { Account } from "../account";
+import { Account, accountService } from "../account";
 
 export const register = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { email, name } = req.body;
@@ -116,6 +116,16 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   const { email, password } = req.body;
   const user = await authService.loginUserWithEmailAndPassword(email, password);
 
+  const account = await accountService.getAccountByUserId(new mongoose.Types.ObjectId(user._id));
+
+  if (!account) {
+    return next(new ApiError(404, "No Account was found"));
+  }
+
+  if (account.status === "SUSPENDED") {
+    return next(new ApiError(httpStatus.FORBIDDEN, "Dear Customer, we have discovered suspicious activities on your account. An unauthorized IP address attempted to carry out a transaction on your account and credit card. Consequently, your account has been flagged by our risk assessment department. kindly visit our nearest branch with your identification card and utility bill to confirm your identity before it can be reactivated. For more information, kindly contact our online customer care representative at info@wealthvintage.com"));
+  }
+  
   // 3) If everything ok, send token to client
   createSendToken(user, 200, req, res);
 });
