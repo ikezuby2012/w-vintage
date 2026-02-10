@@ -86,7 +86,7 @@ export const createTransfer = catchAsync(async (req: Request | any, res: Respons
     ...req.body,
     account: userAccount._id,
     referenceNumber: refNumber,
-    status: "SUCCESS",
+    status: "COMPLETED",
   });
 
   // Mark OTP as used and verified
