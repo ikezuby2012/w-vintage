@@ -11,13 +11,15 @@ import * as otpRequestService from "../otpRequest/otpRequest.service";
 import * as beneficiaryService from "../beneficiary/beneficiary.service";
 import { v4 as uuidv4 } from 'uuid';
 import Transfer from "./transfer.model";
+import { Account } from "../account";
 
 
 export const createTransfer = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
   const userId = req.user?._id;
-  const { transactionPin, otp, saveAsBeneficiary } = req.body;
+  const { transactionPin, otp, saveAsBeneficiary, amount } = req.body;
 
   const refNumber = uuidv4();
+  const totalDebit = Number(amount);
 
   // Check if fee is greater than user account balance
   const userAccount = await accountService.getAccountByUserId(new mongoose.Types.ObjectId(userId));
@@ -62,11 +64,29 @@ export const createTransfer = catchAsync(async (req: Request | any, res: Respons
     return next(new ApiError(httpStatus.BAD_REQUEST, "OTP does not match"))
   }
 
+  const updatedAccount = await Account.findOneAndUpdate(
+    {
+      _id: userAccount._id,
+      balance: { $gte: totalDebit },
+    },
+    {
+      $inc: { balance: -totalDebit },
+    },
+    { new: true }
+  );
+
+  if (!updatedAccount) {
+    return next(
+      new ApiError(httpStatus.BAD_REQUEST, "Balance update failed. Please retry.")
+    );
+  }
+
   // Create transfer
   const transfer = await transferService.createTransfer({
     ...req.body,
     account: userAccount._id,
-    referenceNumber: refNumber
+    referenceNumber: refNumber,
+    status: "SUCCESS",
   });
 
   // Mark OTP as used and verified

@@ -60,7 +60,7 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
     if (!isUnique) {
       // Rollback: Delete the user since we couldn't create account
       await User.findByIdAndDelete(createdUser._id);
-      return next(new ApiError(400, 'Failed to generate unique account number after multiple attempts'));
+      return next(new ApiError(400, 'Failed to generate unique account number after multiple attempts', true));
     }
 
     // 3. Create account (without transaction)
@@ -119,11 +119,11 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   const account = await accountService.getAccountByUserId(new mongoose.Types.ObjectId(user._id));
 
   if (!account) {
-    return next(new ApiError(404, "No Account was found"));
+    return next(new ApiError(404, "No Account was found", true));
   }
 
   if (account.status === "SUSPENDED") {
-    return next(new ApiError(httpStatus.FORBIDDEN, "Dear Customer, we have discovered suspicious activities on your account. An unauthorized IP address attempted to carry out a transaction on your account and credit card. Consequently, your account has been flagged by our risk assessment department. kindly visit our nearest branch with your identification card and utility bill to confirm your identity before it can be reactivated. For more information, kindly contact our online customer care representative at info@wealthvintage.com"));
+    return next(new ApiError(httpStatus.FORBIDDEN, "Dear Customer, we have discovered suspicious activities on your account. An unauthorized IP address attempted to carry out a transaction on your account and credit card. Consequently, your account has been flagged by our risk assessment department. kindly visit our nearest branch with your identification card and utility bill to confirm your identity before it can be reactivated. For more information, kindly contact our online customer care representative at info@wealthvintage.com", true));
   }
   
   // 3) If everything ok, send token to client
@@ -135,11 +135,11 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
   const user = await getUserById(id);
 
   if (!user) {
-    return next(new ApiError(httpStatus.NOT_FOUND, "User not found"));
+    return next(new ApiError(httpStatus.NOT_FOUND, "User not found", true));
   }
 
   if (user.otpExpires && user.otpExpires < new Date()) {
-    return next(new ApiError(httpStatus.UNAUTHORIZED, "OTP has expired"));
+    return next(new ApiError(httpStatus.UNAUTHORIZED, "OTP has expired", true));
   }
 
   const verifiedUser = await authService.verifyUserEmail(id, otp);
@@ -180,7 +180,7 @@ export const forgotPassword = catchAsync(
     // 1) Get user based on POSTed email
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
-      return next(new ApiError(404, "There is no user with email address."));
+      return next(new ApiError(404, "There is no user with email address.", true));
     }
 
     // 2) Generate the random reset token
@@ -225,7 +225,7 @@ export const resetPassword = catchAsync(
     // 2) If token has not expired, and there is user, set the new password
     if (!user) {
       return next(
-        new ApiError(httpStatus.NOT_FOUND, "Token is invalid or has expired")
+        new ApiError(httpStatus.NOT_FOUND, "Token is invalid or has expired", true)
       );
     }
 
@@ -256,7 +256,7 @@ export const ResetUserPassword = catchAsync(
 
     if (!user) {
       return next(
-        new ApiError(httpStatus.NOT_FOUND, "User not found")
+        new ApiError(httpStatus.NOT_FOUND, "User not found", true)
       );
     }
 
