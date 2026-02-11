@@ -1,5 +1,5 @@
 import httpStatus from "http-status";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import catchAsync from "../utils/catchAsync";
 import ApiError from "../errors/ApiError";
@@ -67,3 +67,35 @@ export const deleteUser = catchAsync(async (req: Request, res: Response) => {
     res.status(httpStatus.NO_CONTENT).send();
   }
 });
+
+export const updateAccountBasicDetails = catchAsync(
+  async (req: Request | any, res: Response, next: NextFunction) => {
+    const { accountId } = req.params;
+    const { name, email, phoneNumber, country } = req.body;
+
+    const isValidString = (value: any) =>
+      typeof value === "string" && value.trim().length > 0;
+
+    const updateData: any = {};
+
+    if (isValidString(name)) updateData.name = name.trim();
+    if (isValidString(email)) updateData.email = email.trim().toLowerCase();
+    if (isValidString(phoneNumber)) updateData.phoneNumber = phoneNumber.trim();
+    if (isValidString(country)) updateData.country = country.trim();
+
+    const updatedAccount = await userService.updateUserById(
+      new mongoose.Types.ObjectId(accountId),
+      updateData
+    );
+
+    if (!updatedAccount) {
+      return next(new ApiError(httpStatus.NOT_FOUND, "Account not found"));
+    }
+
+    res.status(httpStatus.OK).json({
+      status: "success",
+      message: "Account details updated successfully",
+      data: updatedAccount,
+    });
+  }
+);

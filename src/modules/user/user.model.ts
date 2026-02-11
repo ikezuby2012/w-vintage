@@ -74,6 +74,7 @@ const userSchema = new mongoose.Schema<IUserDoc, IUserModel>(
       type: Boolean,
       default: false,
     },
+    mustResetPin: { type: Boolean, default: false },
     active: {
       type: Boolean,
       default: true,

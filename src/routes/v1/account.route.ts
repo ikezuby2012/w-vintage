@@ -1,5 +1,6 @@
 import express, { Router } from "express";
 import { accountController } from "../../modules/account";
+import { userController } from "../../modules/user";
 import { auth } from "../../modules/Auth";
 
 const router: Router = express.Router();
@@ -18,6 +19,7 @@ router
   );
 
 router.route("/account-info").get(auth.protect, accountController.GetAccountInfo);
+router.route("/setting/reset-pin").patch(auth.protect, accountController.resetPin);
 
 router
   .route("/:accountId")
@@ -39,5 +41,6 @@ router
 router.get("/:accountId/verify-account", auth.protect, accountController.verifyAccount);
 router.patch("/:accountId/update-status", auth.protect, accountController.updateAccountStatus);
 router.patch("/admin/:accountId/request-reset-pin", auth.protect, accountController.requestPinReset);
-  
+router.patch("/:accountId/basic-details", auth.protect, userController.updateAccountBasicDetails);
+
 export default router;

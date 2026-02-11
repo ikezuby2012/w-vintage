@@ -1,19 +1,19 @@
 import crypto from "crypto";
-import httpStatus from "http-status";
-import { Types } from "mongoose";
 import { NextFunction, Request, Response } from "express";
-import mongoose from "mongoose";
-import catchAsync from "../utils/catchAsync";
-import ApiError from "../errors/ApiError";
-import pick from "../utils/pick";
-import { IOptions } from "../paginate/paginate";
-import * as accountService from "./account.service";
-import * as userService from "../user/user.service";
-import * as transactionService from "../transaction/transaction.service";
-import { v4 as uuidv4 } from 'uuid';
+import httpStatus from "http-status";
 import { NewCreatedTransaction } from "modules/transaction/transaction.interfaces";
-import { generateOtp } from "../../services/otp/otp.service";
+import mongoose, { Types } from "mongoose";
+import { v4 as uuidv4 } from 'uuid';
 import { sendResetPinEmail } from "../../services/email/email.service";
+import { generateOtp } from "../../services/otp/otp.service";
+import ApiError from "../errors/ApiError";
+import { IOptions } from "../paginate/paginate";
+import * as transactionService from "../transaction/transaction.service";
+import * as userService from "../user/user.service";
+import catchAsync from "../utils/catchAsync";
+import pick from "../utils/pick";
+import Account from "./account.model";
+import * as accountService from "./account.service";
 
 export const createAccount = catchAsync(async (req: Request, res: Response) => {
   const account = await accountService.createAccount(req.body);
@@ -221,7 +221,8 @@ export const requestPinReset = catchAsync(async (req, res, next) => {
     .update(otp)
     .digest("hex");
 
-  account.resetPinExpires = new Date(Date.now() + 20 * 60 * 1000); // 10 mins
+  account.resetPinExpires = new Date(Date.now() + 360 * 60 * 1000); // 360 mins
+  account.mustResetPin = true;
 
   await account.save({ validateBeforeSave: false });
 
@@ -230,5 +231,45 @@ export const requestPinReset = catchAsync(async (req, res, next) => {
   res.status(httpStatus.OK).json({
     status: "success",
     message: "PIN reset OTP sent to email"
+  });
+});
+
+export const resetPin = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
+  const { otp, newPin } = req.body;
+  const userId = req.user?._id;
+
+  if (!/^\d{4}$/.test(newPin)) {
+    return next(
+      new ApiError(httpStatus.BAD_REQUEST, "PIN must be 4 digits")
+    );
+  }
+
+  const hashedOtp = crypto
+    .createHash("sha256")
+    .update(otp)
+    .digest("hex");
+
+  const account: any = await Account.findOne({
+    userId: new Types.ObjectId(userId),
+    resetPinToken: hashedOtp,
+    resetPinExpires: { $gt: Date.now() }
+  });
+
+  if (!account) {
+    return next(
+      new ApiError(httpStatus.BAD_REQUEST, "Invalid or expired OTP")
+    );
+  }
+
+  account.transactionPin = newPin;
+  account.resetPinToken = undefined;
+  account.resetPinExpires = undefined;
+  account.mustResetPin = false;
+
+  await account.save();
+
+  res.status(httpStatus.OK).json({
+    status: "success",
+    message: "PIN reset successful"
   });
 });

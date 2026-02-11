@@ -87,9 +87,21 @@ export const updateUserById = async (
   if (updateBody.email && (await User.isEmailTaken(updateBody.email, userId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
   }
-  Object.assign(user, updateBody);
-  await user.save();
-  return user;
+
+  // Object.assign(user, updateBody);
+  // await user.save();
+  // return user;
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    updateBody,
+    {
+      new: true,
+      runValidators: true,
+    }
+  );
+
+  return updatedUser;
 };
 
 /**
@@ -113,7 +125,7 @@ export const GetUsersCount = () => User.countDocuments();
 export const generateAccountNumber = (): string => {
   // 1. Get current timestamp in seconds (currently 10 digits)
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  
+
   // 2. Calculate how many digits we need to reach 12
   const targetLength = 12;
   const remainingDigits = targetLength - timestamp.length;
@@ -123,7 +135,7 @@ export const generateAccountNumber = (): string => {
     const randomPart = Math.floor(Math.random() * Math.pow(10, remainingDigits))
       .toString()
       .padStart(remainingDigits, '0');
-    
+
     return timestamp + randomPart;
   }
 

@@ -14,6 +14,7 @@ export interface IUser {
   isVerified?: boolean | undefined;
   active?: boolean | undefined;
   mustChangePassword?: boolean;
+  mustResetPin?: boolean;
   country?: string | undefined;
   passwordResetToken?: String | undefined;
   passwordResetExpires?: Date | undefined;
@@ -64,6 +65,7 @@ export type NewRegisteredUser = Omit<
   | "otpExpires"
   | "otp"
   | "mustChangePassword"
+  | "mustResetPin"
 > & Pick<IAccount, 'accountType' | 'transactionPin'>;
 
 export type NewCreatedUser = Omit<

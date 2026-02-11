@@ -247,3 +247,22 @@ export const getTransferStats = catchAsync(
     });
   }
 );
+
+export const getUserTransfers = catchAsync(async (req: Request | any, res: Response, next: NextFunction) => {
+  const userId = req.user?._id;
+
+  const userAccount = await accountService.getAccountByUserId(new mongoose.Types.ObjectId(userId));
+  if (!userAccount) {
+    return next(new ApiError(httpStatus.NOT_FOUND, "User account not found"));
+  }
+
+  const txn = await transferService.queryTransfers(
+    { account: new Types.ObjectId(userAccount._id) },
+    {}
+  );
+
+  return res.status(httpStatus.OK).json({
+    status: "success",
+    data: txn,
+  });
+});

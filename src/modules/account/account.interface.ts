@@ -13,6 +13,7 @@ export interface IAccount {
     isVerified: boolean;
     resetPinToken?: string;
     resetPinExpires?: Date;
+    mustResetPin?: boolean;
     status: "ACTIVE" | "SUSPENDED" | "CLOSED" | "PENDING" | "FROZEN";
     isSoftDeleted?: boolean | undefined;
 }
@@ -45,4 +46,5 @@ export type NewCreatedAccount = Omit<
     | "updatedAt"
     | "resetPinToken"
     | "resetPinExpires"
+    | "mustResetPin"
 >;

@@ -37,6 +37,7 @@ router
   );
 
 router.get("/admin/stats", transferController.getTransferStats);
+router.route("/user/transfers").get(auth.protect, transferController.getUserTransfers);
 // router
 //   .route("/validate-otp")
 //   .post(
