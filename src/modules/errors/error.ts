@@ -29,7 +29,9 @@ export const errorConverter = (
   _res: Response,
   next: NextFunction
 ) => {
-  let error = { ...err };
+  //let error = { ...err };
+  let error = err;
+
   error.message = err.message;
   if (error.name === "CastError") error = handleCastErrorDB(error);
   if (error.code === 11000) error = handleDuplicateErrorDB(error);
@@ -37,10 +39,12 @@ export const errorConverter = (
   if (error.name === "TokenExpiredError") error = handleTokenExpiredError();
 
   if (!(error instanceof ApiError)) {
+    console.log(error);
     const statusCode =
       error.statusCode || error instanceof mongoose.Error
         ? httpStatus.BAD_REQUEST
         : httpStatus.INTERNAL_SERVER_ERROR;
+
     const message: string = error.message || `${httpStatus[statusCode]}`;
     error = new ApiError(statusCode, message, true, err.stack);
   }
@@ -68,8 +72,8 @@ export const errorHandler = (
     message,
     ...((process.env.NODE_ENV as string) === "development" &&
       _req.get("host")?.startsWith("localhost") && {
-        stack: err.stack,
-      }),
+      stack: err.stack,
+    }),
   };
 
   if ((process.env.NODE_ENV as string) === "development") {

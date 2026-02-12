@@ -35,7 +35,6 @@ export const queryTransactions = async (
   options: IOptions
 ): Promise<QueryResult> => {
   const transactions = await Transaction.paginate(filter, options);
-  console.log(transactions.results[0]);
   return transactions;
 };
 

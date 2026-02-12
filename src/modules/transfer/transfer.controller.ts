@@ -34,7 +34,6 @@ export const createTransfer = catchAsync(async (req: Request | any, res: Respons
   if (req.body.fee > userAccount.balance) {
     return next(new ApiError(httpStatus.BAD_REQUEST, "Insufficient balance to cover transfer fee"));
   }
-  console.log(userAccount);
   // Validate transaction pin
   if (!transactionPin || transactionPin !== userAccount.transactionPin) {
     return next(new ApiError(httpStatus.BAD_REQUEST, "Invalid transaction pin"));
