@@ -1,15 +1,13 @@
 import httpStatus from "http-status";
 // import Token from '../token/token.model';
-import mongoose from "mongoose";
 import crypto from 'crypto';
+import mongoose from "mongoose";
 
-import ApiError from "../errors/ApiError";
-import { getUserByEmail, getUserById } from "../user/user.service";
-import { IUserDoc, IUserWithToken } from "../user/user.interfaces";
-import { User } from "../user";
 import { verifyOtp } from "../../services/otp/otp.service";
-import config from "../../config";
-import bcrypt from "bcryptjs";
+import ApiError from "../errors/ApiError";
+import { User } from "../user";
+import { IUserDoc, IUserWithToken } from "../user/user.interfaces";
+import { getUserByEmail, getUserById } from "../user/user.service";
 
 const algorithm = 'aes-256-gcm';
 const keyString = process.env.ENCRYPTION_KEY || 'your-default-key-here';
@@ -39,6 +37,8 @@ export const loginUserWithEmailAndPassword = async (
   }
   return user;
 };
+
+
 
 /**
  * Forgotten password

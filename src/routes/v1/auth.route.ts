@@ -11,12 +11,15 @@ router.post(
 );
 
 router.post("/login", validate(authValidation.login), authController.login);
+router.post("/login-admin", validate(authValidation.login), authController.AdminLogin);
 router.post("/logout", validate(authValidation.logout), authController.logout);
 router.post(
   "/verify-email",
   validate(authValidation.verifyEmail),
   authController.verifyEmail
 );
+router.post("/confirm-login-otp", authController.ConfirmloginWithOtp);
+router.get("/resend-login-otp/:id", authController.resendLoginOtp);
 
 router.get("/resend-otp/:id", authController.regenerateOtp);
 router.post("/forgotpassword", authController.forgotPassword);

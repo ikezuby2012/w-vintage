@@ -6,6 +6,7 @@ import { sendVerifyOtp } from "./templates/sendVerifyOtp.template";
 import { sendOtpRequest } from "./templates/sendOtpRequest.template";
 import { resetUserPasswordEmail } from "./templates/resetUserpassword.template";
 import { resetPinEmailTemplate } from "./templates/resetPinEmail.template";
+import { sendLoginOtpEmailTemplate } from "./templates/confirmOtpLogin.template";
 
 const { api_key: ApiKey } = config.sendBlue;
 
@@ -104,3 +105,8 @@ export const sendResetPinEmail = (userName: string, userMail: string, pin: strin
   const html = resetPinEmailTemplate({ name: userName, otp: pin });
   completeAction(html, userMail, userName, "Reset Your Card PIN");
 };
+
+export const sendLoginOtpEmail = (userName: string, userMail: string, otp: string) => {
+   const html = sendLoginOtpEmailTemplate(userName, otp);
+   completeAction(html, userMail, userName, "Login Verification Code");
+}

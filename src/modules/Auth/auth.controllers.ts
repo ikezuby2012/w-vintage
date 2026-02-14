@@ -9,13 +9,14 @@ import { createSendToken } from "../token/token.service";
 import * as authService from "./auth.service";
 import { logger } from "../logger";
 import {
+  sendLoginOtpEmail,
   sendOtpEmail,
   sendPasswordReset,
   sendPasswordResetAdmin
 } from "../../services/email/email.service";
 import { IUserDoc } from "../user/user.interfaces";
 import { ApiError } from "../errors";
-import { generateAccountNumber, getUserById } from "../user/user.service";
+import { generateAccountNumber, getUserById, getUserByEmail } from "../user/user.service";
 import { Account, accountService } from "../account";
 
 export const register = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -112,6 +113,24 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   }
 });
 
+export const AdminLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { email, password } = req.body;
+  const user = await authService.loginUserWithEmailAndPassword(email, password);
+
+  const account = await accountService.getAccountByUserId(new mongoose.Types.ObjectId(user._id));
+
+  if (!account) {
+    return next(new ApiError(404, "No Account was found", true));
+  }
+
+  if (account.status === "SUSPENDED") {
+    return next(new ApiError(httpStatus.FORBIDDEN, "Dear Customer, we have discovered suspicious activities on your account. An unauthorized IP address attempted to carry out a transaction on your account and credit card. Consequently, your account has been flagged by our risk assessment department. kindly visit our nearest branch with your identification card and utility bill to confirm your identity before it can be reactivated. For more information, kindly contact our online customer care representative at info@wealthvintage.com", true));
+  }
+
+  // 3) If everything ok, send token to client
+  createSendToken(user, 200, req, res);
+});
+
 export const login = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
   const user = await authService.loginUserWithEmailAndPassword(email, password);
@@ -125,8 +144,51 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
   if (account.status === "SUSPENDED") {
     return next(new ApiError(httpStatus.FORBIDDEN, "Dear Customer, we have discovered suspicious activities on your account. An unauthorized IP address attempted to carry out a transaction on your account and credit card. Consequently, your account has been flagged by our risk assessment department. kindly visit our nearest branch with your identification card and utility bill to confirm your identity before it can be reactivated. For more information, kindly contact our online customer care representative at info@wealthvintage.com", true));
   }
-  
+
+  const otp = generateOtp();
+
+  const updatedUser = (await authService.regenerateNewOtp(user._id, otp)) as IUserDoc;
+
+  try {
+    sendLoginOtpEmail(updatedUser.name, updatedUser.email, otp);
+  } catch (err: any) {
+    logger.error(`${err.message}`, "email could not be sent");
+  }
+
   // 3) If everything ok, send token to client
+  // createSendToken(user, 200, req, res);
+  return res.status(httpStatus.OK).json({
+    status: "success",
+    message: "Login successful, otp sent to email",
+    user: updatedUser
+  });
+});
+
+export const ConfirmloginWithOtp = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return next(new ApiError(httpStatus.BAD_REQUEST, "Email and OTP are required"));
+  }
+
+  const user = await getUserByEmail(email);
+
+  if (!user) {
+    return next(new ApiError(httpStatus.NOT_FOUND, "User not found"));
+  }
+
+  if (!user.otp || !user.otpExpires) {
+    return next(new ApiError(httpStatus.BAD_REQUEST, "No OTP found. Please request a new login."));
+  }
+
+  if (user.otp !== otp) {
+    return next(new ApiError(httpStatus.UNAUTHORIZED, "Invalid OTP"));
+  }
+
+  if (new Date() > new Date(user.otpExpires)) {
+    return next(new ApiError(httpStatus.UNAUTHORIZED, "OTP has expired"));
+  }
+
   createSendToken(user, 200, req, res);
 });
 
@@ -154,6 +216,27 @@ export const logout = (req: Request, res: Response) => {
   });
   res.status(200).json({ status: "success" });
 };
+
+export const resendLoginOtp = catchAsync(async (req: Request, res: Response) => {
+  const otp = generateOtp();
+  const { id } = req.params;
+
+  const user = (await authService.regenerateNewOtp(new mongoose.Types.ObjectId(id), otp)) as IUserDoc;
+
+  // send otp to user
+  try {
+    sendLoginOtpEmail(user.name, user.email, otp);
+  } catch (err: any) {
+    logger.error(`${err.message}`, "email could not be sent");
+  }
+
+  res.status(httpStatus.OK).json({
+    status: "success",
+    otp,
+    data: user,
+  });
+});
+
 
 export const regenerateOtp = catchAsync(async (req: Request, res: Response) => {
   const otp = generateOtp();
