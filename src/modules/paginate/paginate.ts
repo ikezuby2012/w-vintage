@@ -71,7 +71,7 @@ const paginate = (schema: Schema) => {
       const limit =
         options.limit && parseInt(options.limit.toString(), 10) > 0
           ? parseInt(options.limit.toString(), 10)
-          : 10;
+          : 1000;
       const page =
         options.page && parseInt(options.page.toString(), 10) > 0
           ? parseInt(options.page.toString(), 10)
